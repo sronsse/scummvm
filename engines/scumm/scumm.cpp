@@ -29,6 +29,9 @@
 #include "common/system.h"
 #include "common/translation.h"
 
+#include "backends/imgui/imgui.h"
+#include "backends/imgui/imgui_fonts.h"
+#include "backends/imgui/IconsMaterialSymbols.h"
 #include "backends/keymapper/keymap.h"
 #include "backends/keymapper/keymapper.h"
 
@@ -92,6 +95,7 @@
 #include "scumm/imuse/drivers/macintosh.h"
 #include "scumm/imuse/drivers/midi.h"
 #include "scumm/detection_steam.h"
+#include "scumm/editor/editor.h"
 
 #ifdef ENABLE_HE
 #ifdef USE_ENET
@@ -117,6 +121,7 @@ namespace Scumm {
 // Use g_scumm from error() ONLY
 ScummEngine *g_scumm = nullptr;
 
+ScummEditor *g_editor = nullptr;
 
 struct dbgChannelDesc {
 	const char *channel, *desc;
@@ -125,6 +130,37 @@ struct dbgChannelDesc {
 
 
 const char *const insaneKeymapId = "scumm-insane";
+
+#ifdef USE_IMGUI
+void onImGuiInit() {
+	ImGuiIO &io = ImGui::GetIO();
+	io.IniFilename = "scumm.ini";
+
+	// Add built-in default font
+	io.Fonts->AddFontDefault();
+
+	// Merge icon font
+	ImFontConfig iconConfig;
+	iconConfig.MergeMode = true;
+	iconConfig.PixelSnapH = false;
+	iconConfig.OversampleH = 3;
+	iconConfig.OversampleV = 3;
+	iconConfig.GlyphOffset = {0, 2};
+	static const ImWchar iconRanges[] = {ICON_MIN_MS, ICON_MAX_MS, 0};
+	ImGui::addTTFFontFromArchive("MaterialSymbolsSharp.ttf", 13.f, &iconConfig, iconRanges);
+
+	g_editor = new ScummEditor(g_scumm);
+}
+
+void onImGuiRender() {
+	g_editor->render();
+}
+
+void onImGuiCleanup() {
+	delete g_editor;
+	g_editor = nullptr;
+}
+#endif
 
 ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	: Engine(syst),
@@ -2680,6 +2716,16 @@ Common::Error ScummEngine::go() {
 		}
 	}
 #endif // ENABLE_HE
+
+#ifdef USE_IMGUI
+	if (debugChannelSet(-1, DEBUG_IMGUI)) {
+		ImGuiCallbacks callbacks;
+		callbacks.init = Scumm::onImGuiInit;
+		callbacks.render = Scumm::onImGuiRender;
+		callbacks.cleanup = Scumm::onImGuiCleanup;
+		_system->setImGuiCallbacks(callbacks);
+	}
+#endif
 
 	while (!shouldQuit()) {
 		// Determine how long to wait before the next loop iteration should start

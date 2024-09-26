@@ -13,6 +13,11 @@ MODULE_OBJS := \
 	costume.o \
 	cursor.o \
 	debugger.o \
+	editor/editor.o \
+	editor/explorer.o \
+	editor/file.o \
+	editor/resource.o \
+	editor/screen.o \
 	dialogs.o \
 	file.o \
 	file_engine.o \
