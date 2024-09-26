@@ -63,6 +63,7 @@ static const DebugChannelDef debugFlagList[] = {
 		{Scumm::DEBUG_SMUSH, "SMUSH", "Track SMUSH"},
 		{Scumm::DEBUG_MOONBASE_AI, "MOONBASEAI", "Track Moonbase AI"},
 		{Scumm::DEBUG_NETWORK, "NETWORK", "Track Networking"},
+		{Scumm::DEBUG_EDITOR, "EDITOR", "Editor support"},
 		DEBUG_CHANNEL_END
 };
 

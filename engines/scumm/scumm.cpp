@@ -108,6 +108,14 @@
 
 #include "audio/mixer.h"
 
+#ifdef USE_IMGUI
+#include "backends/imgui/IconsMaterialSymbols.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+
+#include "backends/imgui/imgui.h"
+#include "backends/imgui/imgui_fonts.h"
+#endif
+
 using Common::File;
 
 namespace Scumm {
@@ -123,6 +131,57 @@ struct dbgChannelDesc {
 
 
 const char *const insaneKeymapId = "scumm-insane";
+
+#ifdef USE_IMGUI
+void onImGuiInit() {
+	ImGuiIO &io = ImGui::GetIO();
+	io.Fonts->AddFontDefault();
+
+	static const ImWchar cyrillic_ranges[] = {
+		0x0020, 0x00FF, // Basic Latin + Latin Supplement
+		0x0400, 0x04FF, // Cyrillic
+		0
+	};
+
+	io.FontDefault = ImGui::addTTFFontFromArchive("FreeSans.ttf", 16.0f, nullptr, cyrillic_ranges);;
+
+	ImFontConfig icons_config;
+	icons_config.MergeMode = true;
+	icons_config.PixelSnapH = false;
+	icons_config.OversampleH = 3;
+	icons_config.OversampleV = 3;
+	icons_config.GlyphOffset = {0, 4};
+
+	static const ImWchar icons_ranges[] = {ICON_MIN_MS, ICON_MAX_MS, 0};
+	ImGui::addTTFFontFromArchive("MaterialSymbolsSharp.ttf", 16.f, &icons_config, icons_ranges);
+
+}
+
+void onImGuiRender() {
+#if 0
+	if (!debugChannelSet(-1, DEBUG_EDITOR)) {
+		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange | ImGuiConfigFlags_NoMouse;
+		return;
+	}
+#endif
+
+	ImGui::GetIO().ConfigFlags &= ~(ImGuiConfigFlags_NoMouseCursorChange | ImGuiConfigFlags_NoMouse);
+
+	//ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
+	static bool seb = true;
+	ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Window", &seb);
+	ImGui::Begin("Coucou", nullptr);
+	ImGui::End();
+	ImGui::Begin("Coucou2", nullptr);
+	ImGui::End();
+	ImGui::End();
+}
+
+void onImGuiCleanup() {
+}
+#endif
 
 ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	: Engine(syst),
@@ -2458,6 +2517,14 @@ Common::Error ScummEngine::go() {
 			}
 		}
 	}
+
+#ifdef USE_IMGUI
+	ImGuiCallbacks callbacks;
+	callbacks.init = Scumm::onImGuiInit;
+	callbacks.render = Scumm::onImGuiRender;
+	callbacks.cleanup = Scumm::onImGuiCleanup;
+	_system->setImGuiCallbacks(callbacks);
+#endif
 
 	while (!shouldQuit()) {
 		// Determine how long to wait before the next loop iteration should start
