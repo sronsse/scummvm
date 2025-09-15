@@ -1100,6 +1100,7 @@ protected:
 	virtual uint32 getResourceRoomOffset(ResType type, ResId idx);
 
 public:
+	byte getEncByte(const int room);
 	int getResourceSize(ResType type, ResId idx);
 	byte *getResourceAddress(ResType type, ResId idx);
 	virtual byte *getStringAddress(ResId idx);
