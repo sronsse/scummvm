@@ -4106,28 +4106,15 @@ void Gdi::drawStrip3DO(byte *dst, int dstPitch, const byte *src, int height, con
 		}                           \
 	} while (0)
 
-void Gdi::drawStripComplex(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
-	byte color;
-	MajMinCodec majMin;
-
-	majMin.setupBitReader(_decomp_shr, src);
-
-	byte lineBuffer[8];
-	memset(lineBuffer, 0, 8);
-
-	while (height--) {
-		majMin.decodeLine(lineBuffer, 8, 1);
-		for (byte i = 0; i < 8; i ++) {
-			color = lineBuffer[i];
-			if (!transpCheck || color != _transparentColor)
-				writeRoomColor(dst, color);
-			dst += _vm->_bytesPerPixel;
-		}
-		dst += dstPitch - 8 * _vm->_bytesPerPixel;
-	}
+static void decodeStripRaw(byte *dst, int dstPitch, const byte *src, int height) {
+	do {
+		memcpy(dst, src, 8);
+		src += 8;
+		dst += dstPitch;
+	} while (--height);
 }
 
-void Gdi::drawStripBasicH(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
+static void decodeStripBasicH(byte *dst, int dstPitch, const byte *src, int height, byte shr, byte mask) {
 	byte color = *src++;
 	uint bits = *src++;
 	byte cl = 8;
@@ -4138,15 +4125,13 @@ void Gdi::drawStripBasicH(byte *dst, int dstPitch, const byte *src, int height, 
 		int x = 8;
 		do {
 			FILL_BITS;
-			if (!transpCheck || color != _transparentColor)
-				writeRoomColor(dst, color);
-			dst += _vm->_bytesPerPixel;
+			*dst++ = color;
 			if (!READ_BIT) {
 			} else if (!READ_BIT) {
 				FILL_BITS;
-				color = bits & _decomp_mask;
-				bits >>= _decomp_shr;
-				cl -= _decomp_shr;
+				color = bits & mask;
+				bits >>= shr;
+				cl -= shr;
 				inc = -1;
 			} else if (!READ_BIT) {
 				color += inc;
@@ -4155,11 +4140,11 @@ void Gdi::drawStripBasicH(byte *dst, int dstPitch, const byte *src, int height, 
 				color += inc;
 			}
 		} while (--x);
-		dst += dstPitch - 8 * _vm->_bytesPerPixel;
+		dst += dstPitch - 8;
 	} while (--height);
 }
 
-void Gdi::drawStripBasicV(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
+static void decodeStripBasicV(byte *dst, int dstPitch, const byte *src, int height, byte shr, byte mask) {
 	byte color = *src++;
 	uint bits = *src++;
 	byte cl = 8;
@@ -4171,15 +4156,14 @@ void Gdi::drawStripBasicV(byte *dst, int dstPitch, const byte *src, int height, 
 		int h = height;
 		do {
 			FILL_BITS;
-			if (!transpCheck || color != _transparentColor)
-				writeRoomColor(dst, color);
+			*dst = color;
 			dst += dstPitch;
 			if (!READ_BIT) {
 			} else if (!READ_BIT) {
 				FILL_BITS;
-				color = bits & _decomp_mask;
-				bits >>= _decomp_shr;
-				cl -= _decomp_shr;
+				color = bits & mask;
+				bits >>= shr;
+				cl -= shr;
 				inc = -1;
 			} else if (!READ_BIT) {
 				color += inc;
@@ -4188,12 +4172,107 @@ void Gdi::drawStripBasicV(byte *dst, int dstPitch, const byte *src, int height, 
 				color += inc;
 			}
 		} while (--h);
-		dst -= _vertStripNextInc;
+		dst -= height * dstPitch - 1;
 	} while (--x);
 }
 
 #undef READ_BIT
 #undef FILL_BITS
+
+static void decodeStripComplex(byte *dst, int dstPitch, const byte *src, int height, byte shift) {
+	MajMinCodec majMin;
+	majMin.setupBitReader(shift, src);
+
+	byte lineBuffer[8];
+	memset(lineBuffer, 0, 8);
+
+	while (height--) {
+		majMin.decodeLine(lineBuffer, 8, 1);
+		memcpy(dst, lineBuffer, 8);
+		dst += dstPitch;
+	}
+}
+
+void Gdi::decodeStrip(byte *dst, int dstPitch, const byte *src, int height) {
+	byte code = *src++;
+	byte shr = code % 10;
+	byte mask = 0xFF >> (8 - shr);
+
+	switch (code) {
+	case BMCOMP_RAW256:
+		decodeStripRaw(dst, dstPitch, src, height);
+		break;
+	case BMCOMP_ZIGZAG_V4: case BMCOMP_ZIGZAG_V5:
+	case BMCOMP_ZIGZAG_V6: case BMCOMP_ZIGZAG_V7: case BMCOMP_ZIGZAG_V8:
+	case BMCOMP_ZIGZAG_VT4: case BMCOMP_ZIGZAG_VT5:
+	case BMCOMP_ZIGZAG_VT6: case BMCOMP_ZIGZAG_VT7: case BMCOMP_ZIGZAG_VT8:
+		decodeStripBasicV(dst, dstPitch, src, height, shr, mask);
+		break;
+	case BMCOMP_ZIGZAG_H4: case BMCOMP_ZIGZAG_H5:
+	case BMCOMP_ZIGZAG_H6: case BMCOMP_ZIGZAG_H7: case BMCOMP_ZIGZAG_H8:
+	case BMCOMP_ZIGZAG_HT4: case BMCOMP_ZIGZAG_HT5:
+	case BMCOMP_ZIGZAG_HT6: case BMCOMP_ZIGZAG_HT7: case BMCOMP_ZIGZAG_HT8:
+		decodeStripBasicH(dst, dstPitch, src, height, shr, mask);
+		break;
+	case BMCOMP_MAJMIN_H4: case BMCOMP_MAJMIN_H5:
+	case BMCOMP_MAJMIN_H6: case BMCOMP_MAJMIN_H7: case BMCOMP_MAJMIN_H8:
+	case BMCOMP_MAJMIN_HT4: case BMCOMP_MAJMIN_HT5:
+	case BMCOMP_MAJMIN_HT6: case BMCOMP_MAJMIN_HT7: case BMCOMP_MAJMIN_HT8:
+	case BMCOMP_RMAJMIN_H4: case BMCOMP_RMAJMIN_H5:
+	case BMCOMP_RMAJMIN_H6: case BMCOMP_RMAJMIN_H7: case BMCOMP_RMAJMIN_H8:
+	case BMCOMP_RMAJMIN_HT4: case BMCOMP_RMAJMIN_HT5:
+	case BMCOMP_RMAJMIN_HT6: case BMCOMP_RMAJMIN_HT7: case BMCOMP_RMAJMIN_HT8:
+		decodeStripComplex(dst, dstPitch, src, height, shr);
+		break;
+	default:
+		memset(dst, 0, 8);
+		for (int y = 1; y < height; y++)
+			memset(dst + y * dstPitch, 0, 8);
+		break;
+	}
+}
+
+void Gdi::drawStripComplex(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
+	byte indices[8 * 480];
+	decodeStripComplex(indices, 8, src, height, _decomp_shr);
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < 8; x++) {
+			byte color = indices[y * 8 + x];
+			if (!transpCheck || color != _transparentColor)
+				writeRoomColor(dst + x * _vm->_bytesPerPixel, color);
+		}
+		dst += dstPitch;
+	}
+}
+
+void Gdi::drawStripBasicH(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
+	byte indices[8 * 480];
+	decodeStripBasicH(indices, 8, src, height, _decomp_shr, _decomp_mask);
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < 8; x++) {
+			byte color = indices[y * 8 + x];
+			if (!transpCheck || color != _transparentColor)
+				writeRoomColor(dst + x * _vm->_bytesPerPixel, color);
+		}
+		dst += dstPitch;
+	}
+}
+
+void Gdi::drawStripBasicV(byte *dst, int dstPitch, const byte *src, int height, const bool transpCheck) const {
+	byte indices[8 * 480];
+	decodeStripBasicV(indices, 8, src, height, _decomp_shr, _decomp_mask);
+
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < 8; x++) {
+			byte color = indices[y * 8 + x];
+			if (!transpCheck || color != _transparentColor)
+				writeRoomColor(dst + x * _vm->_bytesPerPixel, color);
+		}
+		dst += dstPitch;
+	}
+}
 
 /* Ender - Zak256/Indy256 decoders */
 #define READ_BIT_256                       \
