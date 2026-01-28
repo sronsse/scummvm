@@ -13,6 +13,15 @@ MODULE_OBJS := \
 	costume.o \
 	cursor.o \
 	debugger.o \
+	editor/compiler/compiler.o \
+	editor/compiler/context.o \
+	editor/compiler/declaration.o \
+	editor/compiler/expression.o \
+	editor/compiler/function.o \
+	editor/compiler/instruction.o \
+	editor/compiler/lexer.o \
+	editor/compiler/grammar.o \
+	editor/compiler/statement.o \
 	editor/editor.o \
 	editor/explorer.o \
 	editor/file.o \
@@ -98,6 +107,13 @@ MODULE_OBJS := \
 	util.o \
 	vars.o \
 	verbs.o
+
+# HACK: Skip this when including the file for detection objects.
+ifeq "$(LOAD_RULES_MK)" "1"
+scumm-grammar:
+	flex engines/scumm/editor/compiler/lexer.l
+	bison engines/scumm/editor/compiler/parser.y
+endif
 
 ifdef USE_ARM_COSTUME_ASM
 MODULE_OBJS += \
