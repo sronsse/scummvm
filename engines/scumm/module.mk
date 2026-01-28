@@ -27,6 +27,7 @@ MODULE_OBJS := \
 	editor/game.o \
 	editor/file.o \
 	editor/resource.o \
+	editor/room.o \
 	editor/screen.o \
 	dialogs.o \
 	file.o \

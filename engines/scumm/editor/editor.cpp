@@ -40,7 +40,8 @@ ScummEditor::ScummEditor(ScummEngine *engine)
 	  _encByte(engine->getEncByte(0)),
 	  _screen(engine),
 	  _explorer(_serializedIndex, _serializedMain),
-	  _game(_gameName, _encByte, _rnam, _maxs, _droo, _dscr, _dsou, _dcos, _dchr, _dobj, _aary) {
+	  _game(_gameName, _encByte, _rnam, _maxs, _droo, _dscr, _dsou, _dcos, _dchr, _dobj, _aary),
+	  _room(_rnam, _droo, _lecf) {
 	// Verify version
 	if (_engine->_game.version != 6)
 		error("Editor only supports SCUMM v6");
@@ -285,6 +286,7 @@ void ScummEditor::render() {
 	static bool showScreen = true;
 	static bool showExplorer = true;
 	static bool showGame = true;
+	static bool showRoom = true;
 
 	// Check for changes
 	bool dirty = _serializedIndex != _snapshotIndex || _serializedMain != _snapshotMain;
@@ -312,6 +314,7 @@ void ScummEditor::render() {
 			ImGui::MenuItem(ICON_RESOURCE " Explorer", nullptr, &showExplorer);
 			ImGui::Separator();
 			ImGui::MenuItem(ICON_GAME " Game", nullptr, &showGame);
+			ImGui::MenuItem(ICON_ROOM " Room", nullptr, &showRoom);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMenuBar();
@@ -331,6 +334,8 @@ void ScummEditor::render() {
 		_explorer.render(dockSpaceId, &showExplorer);
 	if (showGame)
 		_game.render(dockSpaceId, &showGame);
+	if (showRoom)
+		_room.render(dockSpaceId, &showRoom);
 }
 
 } // End of namespace Scumm
