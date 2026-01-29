@@ -26,6 +26,7 @@
 #include "common/str.h"
 
 #include "scumm/editor/explorer.h"
+#include "scumm/editor/game.h"
 #include "scumm/editor/screen.h"
 
 namespace Scumm {
@@ -60,6 +61,7 @@ private:
 
 	Editor::Screen _screen;
 	Editor::Explorer _explorer;
+	Editor::Game _game;
 
 	void load();
 	void save();
