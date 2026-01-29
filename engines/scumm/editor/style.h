@@ -26,6 +26,7 @@
 #include "backends/imgui/imgui.h"
 
 // Icons
+#define ICON_CHARSET   ICON_MS_FONT_DOWNLOAD
 #define ICON_EDITOR    ICON_MS_CONSTRUCTION
 #define ICON_GAME      ICON_MS_VIDEOGAME_ASSET
 #define ICON_INVISIBLE ICON_MS_VISIBILITY_OFF

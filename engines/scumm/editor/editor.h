@@ -25,6 +25,7 @@
 #include "common/path.h"
 #include "common/str.h"
 
+#include "scumm/editor/charset.h"
 #include "scumm/editor/explorer.h"
 #include "scumm/editor/game.h"
 #include "scumm/editor/room.h"
@@ -64,6 +65,7 @@ private:
 	Editor::Explorer _explorer;
 	Editor::Game _game;
 	Editor::Room _room;
+	Editor::Charset _charset;
 
 	void load();
 	void save();

@@ -22,6 +22,7 @@ MODULE_OBJS := \
 	editor/compiler/lexer.o \
 	editor/compiler/grammar.o \
 	editor/compiler/statement.o \
+	editor/charset.o \
 	editor/editor.o \
 	editor/explorer.o \
 	editor/game.o \
