@@ -30,6 +30,7 @@ MODULE_OBJS := \
 	editor/resource.o \
 	editor/room.o \
 	editor/screen.o \
+	editor/script.o \
 	dialogs.o \
 	file.o \
 	file_engine.o \
