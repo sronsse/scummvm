@@ -367,6 +367,7 @@ public:
 	                int stripnr, int numstrip, byte flag);
 
 	static void decodeStrip(byte *dst, int dstPitch, const byte *src, int height);
+	static void decodeMaskStrip(byte *dst, int dstPitch, const byte *src, int height);
 
 #ifdef ENABLE_HE
 	void drawBMAPBg(const byte *ptr, VirtScreen *vs);

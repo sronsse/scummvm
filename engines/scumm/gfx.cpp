@@ -3113,28 +3113,7 @@ bool Gdi::decompressBitmap(byte *dst, int dstPitch, const byte *src, int numLine
 }
 
 void Gdi::decompressMaskImg(byte *dst, const byte *src, int height) const {
-	byte b, c;
-
-	while (height) {
-		b = *src++;
-
-		if (b & 0x80) {
-			b &= 0x7F;
-			c = *src++;
-
-			do {
-				*dst = c;
-				dst += _numStrips;
-				--height;
-			} while (--b && height);
-		} else {
-			do {
-				*dst = *src++;
-				dst += _numStrips;
-				--height;
-			} while (--b && height);
-		}
-	}
+	decodeMaskStrip(dst, _numStrips, src, height);
 }
 
 void GdiHE::decompressTMSK(byte *dst, const byte *tmsk, const byte *src, int height) const {
@@ -4229,6 +4208,28 @@ void Gdi::decodeStrip(byte *dst, int dstPitch, const byte *src, int height) {
 		for (int y = 1; y < height; y++)
 			memset(dst + y * dstPitch, 0, 8);
 		break;
+	}
+}
+
+void Gdi::decodeMaskStrip(byte *dst, int dstPitch, const byte *src, int height) {
+	byte b, c;
+	while (height) {
+		b = *src++;
+		if (b & 0x80) {
+			b &= 0x7F;
+			c = *src++;
+			do {
+				*dst = c;
+				dst += dstPitch;
+				--height;
+			} while (--b && height);
+		} else {
+			do {
+				*dst = *src++;
+				dst += dstPitch;
+				--height;
+			} while (--b && height);
+		}
 	}
 }
 
