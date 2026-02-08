@@ -43,6 +43,7 @@ ScummEditor::ScummEditor(ScummEngine *engine)
 	  _game(_gameName, _encByte, _rnam, _maxs, _droo, _dscr, _dsou, _dcos, _dchr, _dobj, _aary),
 	  _room(_rnam, _droo, _lecf),
 	  _charset(_dchr, _lecf),
+	  _costume(_dcos, _lecf),
 	  _script(_dscr, _lecf) {
 	// Verify version
 	if (_engine->_game.version != 6)
@@ -290,6 +291,7 @@ void ScummEditor::render() {
 	static bool showGame = true;
 	static bool showRoom = true;
 	static bool showCharset = true;
+	static bool showCostume = true;
 	static bool showScript = true;
 
 	// Check for changes
@@ -318,6 +320,7 @@ void ScummEditor::render() {
 			ImGui::MenuItem(ICON_RESOURCE " Explorer", nullptr, &showExplorer);
 			ImGui::Separator();
 			ImGui::MenuItem(ICON_CHARSET " Charset", nullptr, &showCharset);
+			ImGui::MenuItem(ICON_COSTUME " Costume", nullptr, &showCostume);
 			ImGui::MenuItem(ICON_GAME " Game", nullptr, &showGame);
 			ImGui::MenuItem(ICON_ROOM " Room", nullptr, &showRoom);
 			ImGui::MenuItem(ICON_SCRIPT " Script", nullptr, &showScript);
@@ -344,6 +347,8 @@ void ScummEditor::render() {
 		_room.render(dockSpaceId, &showRoom);
 	if (showCharset)
 		_charset.render(dockSpaceId, &showCharset);
+	if (showCostume)
+		_costume.render(dockSpaceId, &showCostume);
 	if (showScript)
 		_script.render(dockSpaceId, &showScript);
 }

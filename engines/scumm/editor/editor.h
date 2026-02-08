@@ -26,6 +26,7 @@
 #include "common/str.h"
 
 #include "scumm/editor/charset.h"
+#include "scumm/editor/costume.h"
 #include "scumm/editor/explorer.h"
 #include "scumm/editor/game.h"
 #include "scumm/editor/room.h"
@@ -67,6 +68,7 @@ private:
 	Editor::Game _game;
 	Editor::Room _room;
 	Editor::Charset _charset;
+	Editor::Costume _costume;
 	Editor::Script _script;
 
 	void load();
