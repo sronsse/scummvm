@@ -78,6 +78,8 @@ private:
 	void readDirectories();
 	void writeDirectories();
 
+	void listFiles();
+
 public:
 	ScummEditor(ScummEngine *engine);
 

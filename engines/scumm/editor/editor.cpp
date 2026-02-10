@@ -24,6 +24,7 @@
 #include "common/config-manager.h"
 #include "common/system.h"
 
+#include "scumm/resource.h"
 #include "scumm/scumm.h"
 
 #include "scumm/editor/editor.h"
@@ -46,9 +47,10 @@ ScummEditor::ScummEditor(ScummEngine *engine)
 	  _costume(_dcos, _lecf),
 	  _script(_dscr, _lecf) {
 	// Verify version
-	if (_engine->_game.version != 6)
-		error("Editor only supports SCUMM v6");
+	//if (_engine->_game.version != 6)
+	//	error("Editor only supports SCUMM v6");
 
+	listFiles();
 	load();
 }
 
@@ -215,6 +217,32 @@ void ScummEditor::writeDirectories() {
 			if (_lecf.lflfs[i].chars[j].id != -1)
 				_dchr.offsets[_lecf.lflfs[i].chars[j].id] = dirOffset;
 			dirOffset += Editor::Resource::getCHARSize(&_lecf.lflfs[i].chars[j]);
+		}
+	}
+}
+
+void ScummEditor::listFiles() {
+	// Index file
+	Common::String indexFile = _engine->generateFilename(0).toString();
+	debug("Editor: Index: %s", indexFile.c_str());
+
+	// Data files
+	Common::Array<Common::String> dataFiles;
+	for (int i = 1; i < _engine->_numRooms; ++i) {
+		if (_engine->_res->_types[rtRoom][i]._roomno == 0)
+			continue;
+
+		Common::String filename = _engine->generateFilename(i).toString();
+		bool found = false;
+		for (uint j = 0; j < dataFiles.size(); ++j) {
+			if (dataFiles[j] == filename) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			dataFiles.push_back(filename);
+			debug("Editor: Data:  %s", filename.c_str());
 		}
 	}
 }
